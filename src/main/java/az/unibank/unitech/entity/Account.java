@@ -16,8 +16,7 @@ public class Account {
     private Integer pin;
 
     @Column
-    @ColumnDefault("true")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @JoinColumn(nullable = false)
     @ManyToOne

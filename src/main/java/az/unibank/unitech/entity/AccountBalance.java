@@ -3,7 +3,7 @@ package az.unibank.unitech.entity;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "accounts_balances")
+@Table(name = "accounts_balance")
 public class AccountBalance {
 
     @Id
