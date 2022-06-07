@@ -1,12 +1,15 @@
 package az.unibank.unitech.entity;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -15,7 +18,8 @@ public class User {
             name = "UUID",
             strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @Column(columnDefinition="uniqueidentifier")
+    @ColumnDefault("random_uuid()")
+    @Type(type = "uuid-char")
     private UUID id;
 
     @Column

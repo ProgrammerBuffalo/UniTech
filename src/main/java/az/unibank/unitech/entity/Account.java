@@ -5,6 +5,7 @@ import org.hibernate.annotations.ColumnDefault;
 import javax.persistence.*;
 
 @Entity
+@Table(name = "accounts")
 public class Account {
 
     @Id
@@ -18,9 +19,12 @@ public class Account {
     @ColumnDefault("true")
     private Boolean isActive;
 
-    @ManyToOne
     @JoinColumn(nullable = false)
+    @ManyToOne
     private User user;
+
+    @OneToOne(mappedBy = "account")
+    private AccountBalance accountBalance;
 
     public Account() {
     }
@@ -58,6 +62,15 @@ public class Account {
 
     public Account setUser(User user) {
         this.user = user;
+        return this;
+    }
+
+    public AccountBalance getAccountBalance() {
+        return accountBalance;
+    }
+
+    public Account setAccountBalance(AccountBalance accountBalance) {
+        this.accountBalance = accountBalance;
         return this;
     }
 }
