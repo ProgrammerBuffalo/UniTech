@@ -1,5 +1,7 @@
 package az.unibank.unitech.dto.base;
 
+import org.springframework.http.HttpStatus;
+
 public class BaseResponse<T> {
 
     private T data;
@@ -8,11 +10,17 @@ public class BaseResponse<T> {
 
     private Integer statusCode;
 
-    public static <T> BaseResponse<T> success(T data, String message, Integer statusCode) {
+    public static BaseResponse<?> success(String message, HttpStatus statusCode) {
+        return new BaseResponse<>()
+                .setMessage(message)
+                .setStatusCode(statusCode.value());
+    }
+
+    public static <T> BaseResponse<T> success(T data, String message, HttpStatus statusCode) {
         return new BaseResponse<T>()
                 .setData(data)
                 .setMessage(message)
-                .setStatusCode(statusCode);
+                .setStatusCode(statusCode.value());
     }
 
     public static BaseResponse<?> fault(String message, Integer statusCode) {
