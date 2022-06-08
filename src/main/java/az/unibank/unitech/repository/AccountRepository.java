@@ -11,5 +11,7 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     Optional<Account> findByPin(Integer pin);
 
+    Optional<Account> findByPinAndUserId(Integer pin, UUID userId);
+
     List<Account> findAllByUserIdAndIsActive(UUID userId, Boolean isActive);
 }
