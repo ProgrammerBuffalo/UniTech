@@ -38,9 +38,9 @@ public class RunnerConfig {
                     Random random = new Random();
                     rateList.stream()
                             .forEach(currencyRate -> currencyRate
-                                    .setRate(currencyRate.getRate() + random.nextDouble(0.10) - 0.05));
+                                    .setRate(currencyRate.getRate() + random.nextDouble(0.1) - 0.01));
 
-                    Thread.sleep(5000);
+                    Thread.sleep(1000 * 60);
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);

@@ -28,7 +28,7 @@ public class TokenFilter extends OncePerRequestFilter {
     private FilterExceptionUtil filterExceptionUtil;
 
     private final String[] whiteList = new String[] {
-            "test"
+            "/h2-console/**"
     };
 
     @Override

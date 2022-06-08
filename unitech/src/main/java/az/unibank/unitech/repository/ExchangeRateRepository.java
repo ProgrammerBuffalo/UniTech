@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Integer> {
 
     Optional<ExchangeRate> findByFromAndTo(Currency from, Currency to);
+
+    Optional<ExchangeRate> findByFromNameAndToName(String from, String to);
 }
