@@ -2,13 +2,10 @@ package az.unibank.unitech;
 
 import az.unibank.unitech.dto.request.AuthorizationRequest;
 import az.unibank.unitech.dto.request.RegistrationRequest;
-import az.unibank.unitech.entity.Account;
-import az.unibank.unitech.entity.Currency;
+import az.unibank.unitech.entity.*;
 import az.unibank.unitech.exception.RestException;
 import az.unibank.unitech.exception.constant.ErrorConstants;
-import az.unibank.unitech.repository.AccountRepository;
-import az.unibank.unitech.repository.CurrencyRepository;
-import az.unibank.unitech.repository.UserRepository;
+import az.unibank.unitech.repository.*;
 import az.unibank.unitech.service.AuthenticationService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthenticationServiceTest {
@@ -31,6 +29,12 @@ public class AuthenticationServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private TokenRepository tokenRepository;
+
+    @Mock
+    private AccountBalanceRepository accountBalanceRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -92,10 +96,14 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    void registerAccount_AssertTrue_IfValidRequest() {
+    void registerAccount_Verify_IfValidRequest() throws RestException {
         RegistrationRequest request = new RegistrationRequest();
         request.setCurrency("AZN");
         request.setPin(1000);
+
+        User user = new User();
+        Account account = new Account();
+        AccountBalance accountBalance = new AccountBalance();
 
         Mockito.when(currencyRepository.findByNameIgnoreCase(request.getCurrency()))
                 .thenReturn(Optional.of(new Currency()));
@@ -103,7 +111,46 @@ public class AuthenticationServiceTest {
         Mockito.when(accountRepository.findByPin(request.getPin()))
                 .thenReturn(Optional.empty());
 
-        Assertions.assertDoesNotThrow(() -> authenticationService.registerAccount(request));
+        Mockito.when(userRepository.save(Mockito.any()))
+                .thenReturn(user);
+
+        Mockito.when(accountRepository.save(Mockito.any()))
+                .thenReturn(account);
+
+        Mockito.when(accountBalanceRepository.save(Mockito.any()))
+                .thenReturn(accountBalance);
+
+        authenticationService.registerAccount(request);
+
+        Mockito.verify(currencyRepository, Mockito.times(1)).findByNameIgnoreCase(request.getCurrency());
+        Mockito.verify(accountRepository, Mockito.times(1)).findByPin(request.getPin());
+        Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any());
+        Mockito.verify(accountRepository, Mockito.times(1)).save(Mockito.any());
+        Mockito.verify(accountBalanceRepository, Mockito.times(1)).save(Mockito.any());
+
+    }
+
+    @Test
+    void authorizeAccount_Verify_IfValidRequest() throws RestException {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setPin(1000);
+        request.setPassword(Mockito.any());
+
+        Mockito.when(accountRepository.findByPin(request.getPin()))
+                .thenReturn(Optional.of(new Account()));
+
+        Mockito.when(userRepository.findByPassword(request.getPassword()))
+                .thenReturn(Optional.of(new User().setId(UUID.randomUUID())));
+
+        Mockito.when(tokenRepository.save(Mockito.any()))
+                .thenReturn(new UserToken().setId(UUID.randomUUID()));
+
+        authenticationService.authorizeAccount(request);
+
+        Mockito.verify(accountRepository, Mockito.times(1)).findByPin(request.getPin());
+        Mockito.verify(userRepository, Mockito.times(1)).findByPassword(request.getPassword());
+        Mockito.verify(tokenRepository, Mockito.times(1)).save(Mockito.any());
+
     }
 
 }
