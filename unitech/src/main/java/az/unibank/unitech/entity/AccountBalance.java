@@ -11,7 +11,7 @@ public class AccountBalance {
     private Integer id;
 
     @Column
-    private Double cash;
+    private Double cash = 100.0;
 
     @JoinColumn(nullable = false)
     @ManyToOne

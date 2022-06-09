@@ -3,6 +3,7 @@ package az.unibank.unitech;
 import az.unibank.unitech.dto.request.RegistrationRequest;
 import az.unibank.unitech.entity.Account;
 import az.unibank.unitech.entity.AccountBalance;
+import az.unibank.unitech.entity.User;
 import az.unibank.unitech.entity.UserToken;
 import az.unibank.unitech.exception.RestException;
 import az.unibank.unitech.exception.constant.ErrorConstants;
@@ -38,7 +39,7 @@ public class AccountServiceTest {
         UUID userToken = UUID.randomUUID();
 
         Mockito.when(tokenRepository.findById(Mockito.any()))
-                .thenReturn(Optional.of(new UserToken()));
+                .thenReturn(Optional.of(new UserToken().setUser(new User())));
 
         Mockito.when(accountRepository.findAllByUserIdAndIsActive(Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(new ArrayList<>());
@@ -62,7 +63,7 @@ public class AccountServiceTest {
         Mockito.when(tokenRepository.findById(Mockito.any()))
                 .thenReturn(Optional.of(new UserToken()));
 
-        Mockito.when(accountRepository.findByPinAndUserId(Mockito.any(), Mockito.any()))
+        Mockito.when(accountRepository.findByPinAndUser(Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(RestException.of(ErrorConstants.PIN_NOT_FOUND).getClass(),
@@ -75,7 +76,7 @@ public class AccountServiceTest {
         Mockito.when(tokenRepository.findById(Mockito.any()))
                 .thenReturn(Optional.of(new UserToken()));
 
-        Mockito.when(accountRepository.findByPinAndUserId(Mockito.any(), Mockito.any()))
+        Mockito.when(accountRepository.findByPinAndUser(Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.of(new Account().setActive(false)));
 
         Assertions.assertThrows(RestException.of(ErrorConstants.ACCOUNT_IS_NOT_ACTIVE).getClass(),
@@ -88,7 +89,7 @@ public class AccountServiceTest {
         Mockito.when(tokenRepository.findById(Mockito.any()))
                 .thenReturn(Optional.of(new UserToken()));
 
-        Mockito.when(accountRepository.findByPinAndUserId(Mockito.any(), Mockito.any()))
+        Mockito.when(accountRepository.findByPinAndUser(Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.of(new Account()
                         .setActive(true)
                         .setAccountBalance(new AccountBalance()

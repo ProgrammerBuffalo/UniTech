@@ -5,6 +5,7 @@ import az.unibank.unitech.dto.response.BalanceTransferResponse;
 import az.unibank.unitech.entity.Account;
 import az.unibank.unitech.entity.AccountBalance;
 import az.unibank.unitech.entity.ExchangeRate;
+import az.unibank.unitech.entity.User;
 import az.unibank.unitech.exception.RestException;
 import az.unibank.unitech.exception.constant.ErrorConstants;
 import az.unibank.unitech.repository.*;
@@ -34,7 +35,7 @@ public class AccountService {
     public List<AccountResponse> getAccounts(String userToken) {
 
         UUID userId = tokenRepository.findById(UUID.fromString(userToken))
-                .get().getId();
+                .get().getUser().getId();
 
         List<Account> accounts = accountRepository.findAllByUserIdAndIsActive(userId, true);
 
@@ -43,7 +44,7 @@ public class AccountService {
                 .map(account -> new AccountResponse()
                         .setPin(account.getPin())
                         .setCash(account.getAccountBalance().getCash())
-                        .setCurrency(account.getAccountBalance().getCurrency().toString())
+                        .setCurrency(account.getAccountBalance().getCurrency().getName())
                 ).collect(Collectors.toList());
 
         return accountResponseList;
@@ -56,17 +57,16 @@ public class AccountService {
         if(fromPIN.equals(toPIN))
             throw RestException.of(ErrorConstants.SAME_ACCOUNT_TRANSFER);
 
-        UUID userId = tokenRepository.findById(UUID.fromString(userToken))
-                .get().getId();
+        User user = tokenRepository.findById(UUID.fromString(userToken))
+                .get().getUser();
 
-        Account fromAcc = accountRepository.findByPinAndUserId(fromPIN, userId)
-                        .orElseThrow(() -> RestException.of(ErrorConstants.PIN_NOT_FOUND));
+        Optional<Account> fromAcc = accountRepository.findByPinAndUser(fromPIN, user);
 
-        if(!fromAcc.getActive())
+        if(!fromAcc.isPresent())
+            throw RestException.of(ErrorConstants.PIN_NOT_FOUND);
+
+        if(!fromAcc.get().getActive())
             throw RestException.of(ErrorConstants.ACCOUNT_IS_NOT_ACTIVE);
-
-        if(fromAcc.getAccountBalance().getCash() < money)
-            throw RestException.of(ErrorConstants.NOT_ENOUGH_MONEY);
 
         Account toAcc = accountRepository.findByPin(toPIN)
                 .orElseThrow(() -> RestException.of(ErrorConstants.PIN_NOT_FOUND));
@@ -75,30 +75,45 @@ public class AccountService {
             throw RestException.of(ErrorConstants.ACCOUNT_IS_NOT_ACTIVE);
 
         AccountBalance fromAccBalance = accountBalanceRepository
-                .findById(fromAcc.getAccountBalance().getId())
+                .findById(fromAcc.get().getAccountBalance().getId())
                 .get();
 
         AccountBalance toAccBalance = accountBalanceRepository
                 .findById(toAcc.getAccountBalance().getId())
                 .get();
 
-        ExchangeRate exchangeRateFromTo = exchangeRateRepository
-                .findByFromAndTo(fromAccBalance.getCurrency(), toAccBalance.getCurrency())
-                .get();
+        if(fromAcc.get().getAccountBalance().getCash() < money)
+            throw RestException.of(ErrorConstants.NOT_ENOUGH_MONEY);
 
-        ExchangeRate exchangeRateToFrom = exchangeRateRepository
-                .findByFromAndTo(toAccBalance.getCurrency(), fromAccBalance.getCurrency())
-                .get();
+        Double cashFromAccBalance = 0.0;
+        Double cashToAccBalance = 0.0;
 
-        Double cashFromAccBalance = fromAccBalance.getCash() - money * exchangeRateFromTo.getRate();
+        if(!fromAccBalance.getCurrency().equals(toAccBalance.getCurrency())) {
 
-        Double cashToAccBalance = toAccBalance.getCash() + money * exchangeRateToFrom.getRate();
+            ExchangeRate exchangeRateFromTo = exchangeRateRepository
+                    .findByFromAndTo(fromAccBalance.getCurrency(), toAccBalance.getCurrency())
+                    .get();
+
+            ExchangeRate exchangeRateToFrom = exchangeRateRepository
+                    .findByFromAndTo(toAccBalance.getCurrency(), fromAccBalance.getCurrency())
+                    .get();
+
+            cashFromAccBalance = fromAccBalance.getCash() - money * exchangeRateFromTo.getRate();
+            cashToAccBalance = toAccBalance.getCash() + money * exchangeRateToFrom.getRate();
+        }
+        else {
+            cashFromAccBalance = fromAccBalance.getCash() - money;
+            cashToAccBalance = toAccBalance.getCash() + money;
+        }
+
+        if(cashFromAccBalance < 0)
+            throw RestException.of(ErrorConstants.NOT_ENOUGH_MONEY);
 
         accountBalanceRepository.save(fromAccBalance.setCash(cashFromAccBalance));
         accountBalanceRepository.save(toAccBalance.setCash(cashToAccBalance));
 
         return new BalanceTransferResponse()
-                .setSenderPin(fromAcc.getPin())
+                .setSenderPin(fromAcc.get().getPin())
                 .setLeftCashOfSender(cashFromAccBalance)
                 .setReceiverPin(toAcc.getPin())
                 .setNewCashOfReceiver(cashToAccBalance);

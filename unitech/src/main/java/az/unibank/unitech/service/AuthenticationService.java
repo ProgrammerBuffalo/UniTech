@@ -46,10 +46,11 @@ public class AuthenticationService {
         if(foundAccount.isPresent())
             throw RestException.of(ErrorConstants.PIN_ALREADY_EXISTS);
 
-        User user = userRepository.save(new User()
-                .setUsername(request.getUsername())
-                .setPassword(request.getPassword())
-        );
+        User user = userRepository.findByPassword(request.getPassword())
+                .orElseGet(() -> userRepository.save(new User()
+                        .setUsername(request.getUsername())
+                        .setPassword(request.getPassword())
+                ));
 
         Account account = accountRepository.save(new Account()
                 .setPin(request.getPin())

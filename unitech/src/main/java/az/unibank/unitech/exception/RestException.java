@@ -3,7 +3,7 @@ package az.unibank.unitech.exception;
 import az.unibank.unitech.exception.constant.ErrorConstants;
 import org.springframework.http.HttpStatus;
 
-public class RestException extends Throwable {
+public class RestException extends Exception {
 
     private HttpStatus statusCode;
     public RestException(ErrorConstants errorConstant) {
